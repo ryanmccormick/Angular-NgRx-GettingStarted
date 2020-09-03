@@ -1,11 +1,10 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Store } from '@ngrx/store';
-import { Subscription } from 'rxjs';
+import { Observable } from 'rxjs';
 
 import * as ProductActions from '../state/product.actions';
 import { Product } from '../product';
-import { ProductService } from '../product.service';
-import { getCurrentProduct, getShowProductCode, State } from '../state/product.reducer';
+import { getCurrentProduct, getError, getProducts, getShowProductCode, State } from '../state/product.reducer';
 
 @Component({
   selector: 'pm-product-list',
@@ -14,39 +13,25 @@ import { getCurrentProduct, getShowProductCode, State } from '../state/product.r
 })
 export class ProductListComponent implements OnInit {
   pageTitle = 'Products';
-  errorMessage: string;
 
-  displayCode: boolean;
+  products$: Observable<Array<Product>>;
+  selectedProduct$: Observable<Product>;
+  displayCode$: Observable<boolean>;
+  errorMessage$: Observable<string>;
 
-  products: Product[];
-
-  // Used to highlight the selected product in the list
-  selectedProduct: Product | null;
-
-  constructor(private productService: ProductService, private store: Store<State>) {
+  constructor(private store: Store<State>) {
   }
 
   ngOnInit(): void {
-    this.store.select(getCurrentProduct).subscribe(product => this.selectedProduct = product);
+    this.products$ = this.store.select(getProducts);
 
-    // this.sub = this.productService.selectedProductChanges$.subscribe(
-    //   currentProduct => this.selectedProduct = currentProduct
-    // );
+    this.errorMessage$ = this.store.select(getError);
 
-    this.productService.getProducts().subscribe({
-      next: (products: Product[]) => this.products = products,
-      error: err => this.errorMessage = err
-    });
+    this.store.dispatch(ProductActions.loadProducts());
 
-    // POTENTIAL UNSUBSCRIBE EXAMPLE
-    // this.sub.add(this.store.select('products').subscribe((products: ProductState) => {
-    //   this.displayCode = products.showProductCode;
-    // }));
+    this.selectedProduct$ = this.store.select(getCurrentProduct);
 
-    // TODO: UNSUBSCRIBE
-    this.store.select(getShowProductCode).subscribe(
-      showProductCode => this.displayCode = showProductCode
-    );
+    this.displayCode$ = this.store.select(getShowProductCode);
   }
 
   checkChanged(): void {

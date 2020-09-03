@@ -13,13 +13,15 @@ export interface ProductState {
   currentProduct: Product;
   currentProductId: number;
   products: Array<Product>;
+  error: string;
 }
 
 export const initialState: ProductState = {
   showProductCode: true,
   currentProduct: null,
   currentProductId: -1,
-  products: []
+  products: [],
+  error: ''
 };
 
 /*
@@ -36,6 +38,7 @@ export const getCurrentProductById = createSelector(
 );
 export const getCurrentProduct = createSelector(getProductFeatureState, state => state.currentProduct);
 export const getProducts = createSelector(getProductFeatureState, state => state.products);
+export const getError = createSelector(getProductFeatureState, state => state.error);
 
 export const productReducer = createReducer<ProductState>(
   initialState,
@@ -67,6 +70,20 @@ export const productReducer = createReducer<ProductState>(
         productCode: 'New',
         starRating: 0
       }
+    };
+  }),
+  on(ProductActions.loadProductsSuccess, (state, action): ProductState => {
+    return {
+      ...state,
+      products: action.products,
+      error: ''
+    };
+  }),
+  on(ProductActions.loadProductsFailure, (state, action): ProductState => {
+    return {
+      ...state,
+      products: [],
+      error: action.error
     };
   })
 );
