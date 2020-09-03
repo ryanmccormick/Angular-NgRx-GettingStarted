@@ -7,8 +7,8 @@ import { Observable } from 'rxjs';
 import { Product } from '../product';
 import { GenericValidator } from '../../shared/generic-validator';
 import { NumberValidators } from '../../shared/number.validator';
-import { getCurrentProduct, State } from '../state/product.reducer';
-import * as ProductActions from '../state/product.actions';
+import { getCurrentProduct, State } from '../state';
+import { clearCurrentProduct, createProduct, deleteProduct, updateProduct } from '../state/actions/product-page.actions';
 
 @Component({
   selector: 'pm-product-edit',
@@ -113,11 +113,11 @@ export class ProductEditComponent implements OnInit {
   deleteProduct(product: Product): void {
     if (product && product.id) {
       if (confirm(`Really delete the product: ${product.productName}?`)) {
-        this.store.dispatch(ProductActions.deleteProduct({product}));
+        this.store.dispatch(deleteProduct({product}));
       }
     } else {
       // No need to delete, it was never saved
-      this.store.dispatch(ProductActions.clearCurrentProduct());
+      this.store.dispatch(clearCurrentProduct());
     }
   }
 
@@ -129,9 +129,9 @@ export class ProductEditComponent implements OnInit {
         // This ensures values not on the form, such as the Id, are retained
         const product = { ...originalProduct, ...this.productForm.value };
         if (product.id === 0) {
-          this.store.dispatch(ProductActions.createProduct({product}));
+          this.store.dispatch(createProduct({product}));
         } else {
-          this.store.dispatch(ProductActions.updateProduct({product}));
+          this.store.dispatch(updateProduct({product}));
         }
       }
     }
