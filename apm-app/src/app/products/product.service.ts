@@ -12,7 +12,11 @@ import { Product } from './product';
 export class ProductService {
   private productsUrl = 'api/products';
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient) {
+    this.updateProduct = this.updateProduct.bind(this);
+    this.createProduct = this.createProduct.bind(this);
+    this.deleteProduct = this.deleteProduct.bind(this);
+  }
 
   getProducts(): Observable<Product[]> {
     return this.http.get<Product[]>(this.productsUrl).pipe(
@@ -24,7 +28,8 @@ export class ProductService {
     const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
     // Product Id must be null for the Web API to assign an Id
     const newProduct = { ...product, id: null };
-    return this.http.post<Product>(this.productsUrl, newProduct, { headers })
+    const url = `${this.productsUrl}`;
+    return this.http.post<Product>(url, newProduct, { headers })
       .pipe(
         catchError(this.handleError)
       );

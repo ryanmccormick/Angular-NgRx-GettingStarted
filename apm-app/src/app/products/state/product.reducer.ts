@@ -10,18 +10,24 @@ export interface State extends GlobalAppState.AppState {
 
 export interface ProductState {
   showProductCode: boolean;
-  currentProduct: Product;
-  currentProductId: number;
+  currentProductId: number | null;
   products: Array<Product>;
   error: string;
 }
 
 export const initialState: ProductState = {
   showProductCode: true,
-  currentProduct: null,
-  currentProductId: -1,
+  currentProductId: null,
   products: [],
   error: ''
+};
+
+const defaultProduct: Product = {
+  id: 0,
+  productName: '',
+  description: '',
+  productCode: 'New',
+  starRating: 0
 };
 
 /*
@@ -30,13 +36,19 @@ export const initialState: ProductState = {
 const getProductFeatureState = createFeatureSelector<ProductState>('products');
 export const getShowProductCode = createSelector(getProductFeatureState, state => state.showProductCode);
 export const getCurrentProductId = createSelector(getProductFeatureState, state => state.currentProductId);
-export const getCurrentProductById = createSelector(
+export const getCurrentProduct = createSelector(
   getProductFeatureState,
   getCurrentProductId,
-  (state, currentProductId) =>
-    state.products.find(product => product.id === currentProductId)
+  (state, currentProductId) => {
+    if (currentProductId === 0) {
+      return {...defaultProduct};
+    } else {
+      return currentProductId ? state.products.find(product => product.id === currentProductId) : null;
+    }
+  }
 );
-export const getCurrentProduct = createSelector(getProductFeatureState, state => state.currentProduct);
+
+// export const getCurrentProduct = createSelector(getProductFeatureState, state => state.currentProduct);
 export const getProducts = createSelector(getProductFeatureState, state => state.products);
 export const getError = createSelector(getProductFeatureState, state => state.error);
 
@@ -51,25 +63,19 @@ export const productReducer = createReducer<ProductState>(
   on(ProductActions.setCurrentProduct, (state: ProductState, action): ProductState => {
     return {
       ...state,
-      currentProduct: action.product
+      currentProductId: action.currentProductId
     };
   }),
   on(ProductActions.clearCurrentProduct, (state: ProductState): ProductState => {
     return {
       ...state,
-      currentProduct: null
+      currentProductId: null
     };
   }),
   on(ProductActions.initCurrentProduct, (state: ProductState): ProductState => {
     return {
       ...state,
-      currentProduct: {
-        id: 0,
-        productName: '',
-        description: '',
-        productCode: 'New',
-        starRating: 0
-      }
+      currentProductId: 0
     };
   }),
   on(ProductActions.loadProductsSuccess, (state, action): ProductState => {
@@ -85,5 +91,64 @@ export const productReducer = createReducer<ProductState>(
       products: [],
       error: action.error
     };
-  })
+  }),
+  on(ProductActions.updateProductSuccess, (state, action): ProductState => {
+    const updatedProducts = [...state.products].map((product: Product) => {
+      if (product.id === action.product.id) {
+        return action.product;
+      } else {
+        return product;
+      }
+    });
+
+    return {
+      ...state,
+      currentProductId: action.product.id,
+      products: [...updatedProducts],
+      error: ''
+    };
+  }),
+  on(ProductActions.updateProductFailure, (state, action): ProductState => {
+    return {
+      ...state,
+      currentProductId: null,
+      error: action.error
+    };
+  }),
+  on(ProductActions.createProductSuccess, (state, action): ProductState => {
+    const updatedProducts = [...state.products, {...action.product}];
+
+    return {
+      ...state,
+      products: updatedProducts,
+      currentProductId: action.product.id,
+      error: '',
+    };
+  }),
+  on(ProductActions.createProductFailure, (state, action): ProductState => {
+    return {
+      ...state,
+      currentProductId: null,
+      error: action.error
+    };
+  }),
+  on(ProductActions.deleteProductSuccess, (state, action): ProductState => {
+    const updatedProducts = [...state.products].filter((product) => {
+      return product.id !== action.product.id;
+    });
+
+    return {
+      ...state,
+      products: updatedProducts,
+      currentProductId: action.product.id,
+      error: '',
+    };
+  }),
+  on(ProductActions.deleteProductFailure, (state, action): ProductState => {
+    return {
+      ...state,
+      currentProductId: null,
+      error: action.error
+    };
+  }),
 );
